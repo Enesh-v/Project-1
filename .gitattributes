@@ -1,2 +1,78 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Clinical Data Cleaning & Visualization Example Project
+# Author: Enesh Vashisht
+# Description: A small Python project for cleaning and visualizing clinical trial data (e.g., SDTM/ADaM-like structure)
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.express as px
+
+# --------------------------
+# STEP 1: Load the Data
+# --------------------------
+# Sample data structure resembling clinical SDTM-like format
+data = pd.DataFrame({
+    'Subject_ID': ['101', '102', '103', '104', '105', '106'],
+    'Visit_Date': ['2024-01-01', '2024-01-05', '2024-01-10', np.nan, '2024-01-15', '2024-01-20'],
+    'Age': [34, 45, 29, 54, None, 42],
+    'Weight_kg': [70.5, 80.0, None, 68.5, 72.0, 75.5],
+    'Lab_Result': [5.1, 4.7, 5.9, 6.2, None, 5.0],
+    'AE_Flag': ['Y', 'N', 'N', 'Y', None, 'N']
+})
+
+# Convert Visit_Date to datetime
+data['Visit_Date'] = pd.to_datetime(data['Visit_Date'])
+
+# --------------------------
+# STEP 2: Data Cleaning
+# --------------------------
+# Flag missing values
+missing_summary = data.isnull().sum()
+print("\nMissing Values Summary:\n", missing_summary)
+
+# Fill missing Age with median
+data['Age'].fillna(data['Age'].median(), inplace=True)
+
+# Fill missing Weight with mean
+data['Weight_kg'].fillna(data['Weight_kg'].mean(), inplace=True)
+
+# Fill Lab_Result with previous value (forward fill)
+data['Lab_Result'].fillna(method='ffill', inplace=True)
+
+# Fill AE_Flag with 'Unknown'
+data['AE_Flag'].fillna('Unknown', inplace=True)
+
+# --------------------------
+# STEP 3: Descriptive Summary
+# --------------------------
+print("\nSummary Statistics:\n", data.describe(include='all'))
+
+# --------------------------
+# STEP 4: Data Visualization
+# --------------------------
+# Distribution of Age
+sns.histplot(data['Age'], kde=True, color='skyblue')
+plt.title('Age Distribution')
+plt.xlabel('Age')
+plt.ylabel('Frequency')
+plt.tight_layout()
+plt.show()
+
+# AE Flag Count
+sns.countplot(x='AE_Flag', data=data, palette='Set2')
+plt.title('Adverse Event (AE) Flag Count')
+plt.xlabel('AE Flag')
+plt.ylabel('Count')
+plt.tight_layout()
+plt.show()
+
+# Lab Result vs. Age (Interactive Plot)
+fig = px.scatter(data, x='Age', y='Lab_Result', color='AE_Flag', title='Lab Results by Age and AE Flag')
+fig.show()
+
+# --------------------------
+# STEP 5: Export Clean Data
+# --------------------------
+data.to_csv("clean_clinical_data.csv", index=False)
+print("\nCleaned data exported to 'clean_clinical_data.csv'")
